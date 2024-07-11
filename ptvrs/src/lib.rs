@@ -1,4 +1,3 @@
-use anyhow::Result;
 use hmac::{Hmac, Mac};
 use serde::de::DeserializeOwned;
 use sha1::Sha1;
@@ -11,6 +10,8 @@ pub mod helpers;
 pub use helpers::*;
 pub mod ty;
 pub use ty::*;
+
+pub type Result<T> = core::result::Result<T, PtvError>;
 
 pub struct Client {
     devid: String,
@@ -51,9 +52,9 @@ impl Client {
         if !res.status().is_success() {
             let status = res.status();
             if let Ok(ApiError { message, .. }) = res.json().await {
-                return Err(anyhow::anyhow!("Request failed: {} - {}", status, message));
+                return Err(PtvError::ApiError { message, status });
             }
-            return Err(anyhow::anyhow!("Request failed: {}", status));
+            return Err(PtvError::ApiStatus(status));
         }
 
         Ok(res.json().await?)

@@ -6,9 +6,11 @@
 
 use chrono::{NaiveDate, NaiveDateTime};
 use derive_more::{Display, From};
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, str::FromStr};
+use thiserror::Error;
 use to_and_fro::{output_case, ToAndFro};
 
 use crate::{
@@ -19,6 +21,21 @@ use crate::{
     },
     opt_de_rfc3339,
 };
+
+#[derive(Debug, Error)]
+pub enum PtvError {
+    #[error("Serde error: {0}")]
+    Serde(#[from] serde_json::Error),
+    #[error("Request failed: {0}")]
+    Reqwest(#[from] reqwest::Error),
+    #[error("Api Error: {0}")]
+    ApiStatus(StatusCode),
+    #[error("Api Error: {status} - {message}")]
+    ApiError {
+        message: String,
+        status: reqwest::StatusCode,
+    },
+}
 
 pub struct I32ButSilly(pub i32);
 impl<'de> Deserialize<'de> for I32ButSilly {
